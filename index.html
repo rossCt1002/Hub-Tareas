@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub de Tareas Colectivo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1a1a2e;
+            color: #e2e8f0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 { color: #00fff0; text-align: center; font-size: 28px; text-shadow: 0 0 10px rgba(0,255,240,0.3); }
+        .form-tarea {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            margin-bottom: 25px;
+        }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #94a3b8; }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            color: white;
+            box-sizing: border-box;
+        }
+        /* Estilo chido para la subida de archivos */
+        input[type="file"] {
+            padding: 5px;
+            background: #16213e;
+            border: 1px dashed #00fff0;
+            cursor: pointer;
+        }
+        .btn {
+            background: #00fff0;
+            color: #0f172a;
+            border: none;
+            padding: 12px 20px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+        .btn:hover { background: #00d1c4; box-shadow: 0 0 15px rgba(0,255,240,0.4); }
+        .grid-tareas {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .card-tarea {
+            background: #16213e;
+            border-left: 5px solid #ff007f;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .card-tarea.hecha { border-left-color: #00fff0; }
+        .materia { font-size: 12px; text-transform: uppercase; color: #ff007f; font-weight: bold; }
+        .card-tarea.hecha .materia { color: #00fff0; }
+        h3 { margin: 5px 0 10px 0; color: white; }
+        .status { font-size: 13px; margin-bottom: 12px; }
+        .links-container {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .link-tarea {
+            display: block;
+            text-align: center;
+            background: #242b4d;
+            color: #00fff0;
+            text-decoration: none;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .link-tarea:hover { background: #00fff0; color: #1a1a2e; }
+        /* Miniatura de la imagen subida */
+        .img-preview {
+            width: 100%;
+            max-height: 150px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-top: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #475569;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .img-preview:hover { opacity: 0.8; }
+        .borrar-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📚 Hub Comunitario de Tareas</h1>
+    
+    <div class="form-tarea">
+        <h2 style="margin-top:0; font-size: 18px; color: #fff;">Subir nueva aportación</h2>
+        <div class="form-group">
+            <label>Materia / Asignatura</label>
+            <input type="text" id="materia" placeholder="Ej. Cultura Digital, Cálculo...">
+        </div>
+        <div class="form-group">
+            <label>Descripción de la Tarea</label>
+            <input type="text" id="descripcion" placeholder="Ej. Resumen de la página 45 o Maqueta">
+        </div>
+        <div class="form-group">
+            <label>Estado</label>
+            <select id="estado">
+                <option value="pendiente">⏳ Pendiente (Por hacer)</option>
+                <option value="hecha">✅ Ya resuelta (Compartir aportación)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Enlace al documento / recurso (Opcional)</label>
+            <input type="url" id="enlace" placeholder="https://drive.google.com/...">
+        </div>
+        <div class="form-group">
+            <label>Subir captura / evidencia (Imagen Opcional)</label>
+            <input type="file" id="imagenInput" accept="image/*">
+        </div>
+        <button class="btn" onclick="procesarYAgregar()">Publicar en el Tablón</button>
+    </div>
+
+    <h2>📌 Tablón de la Comunidad</h2>
+    <div class="grid-tareas" id="tablon">
+        </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', mostrarTareas);
+
+    function procesarYAgregar() {
+        const materia = document.getElementById('materia').value;
+        const descripcion = document.getElementById('descripcion').value;
+        const estado = document.getElementById('estado').value;
+        const enlace = document.getElementById('enlace').value;
+        const imagenInput = document.getElementById('imagenInput');
+
+        if(!materia || !descripcion) {
+            alert("Por favor llena la materia y la descripción.");
+            return;
+        }
+
+        // Si el usuario seleccionó una imagen, la leemos primero
+        if (imagenInput.files && imagenInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Image = e.target.result; // Aquí está la imagen convertida en texto legible
+                guardarTarea(materia, descripcion, estado, enlace, base64Image);
+            };
+            reader.readAsDataURL(imagenInput.files[0]);
+        } else {
+            // Si no subió imagen, se va limpia
+            guardarTarea(materia, descripcion, estado, enlace, null);
+        }
+    }
+
+    function guardarTarea(materia, descripcion, estado, enlace, imagenData) {
+        const nuevaTarea = {
+            id: Date.now(),
+            materia,
+            descripcion,
+            estado,
+            enlace,
+            imagen: imagenData
+        };
+
+        let tareas = JSON.parse(localStorage.getItem('tareas')) || [];
+        tareas.push(nuevaTarea);
+        
+        try {
+            localStorage.setItem('tareas', JSON.stringify(tareas));
+        } catch (e) {
+            alert("⚠️ La imagen es demasiado pesada para la memoria local. Intenta recortarla o usar una captura más pequeña.");
+            return;
+        }
+
+        // Limpiar formulario
+        document.getElementById('materia').value = '';
+        document.getElementById('descripcion').value = '';
+        document.getElementById('enlace').value = '';
+        document.getElementById('imagenInput').value = '';
+
+        mostrarTareas();
+    }
+
+    function mostrarTareas() {
+        const tablon = document.getElementById('tablon');
+        tablon.innerHTML = '';
+        let tareas = JSON.parse(localStorage.getItem('tareas')) || [];
+
+        if(tareas.length === 0) {
+            tablon.innerHTML = '<p style="color: #64748b;">No hay tareas publicadas aún. ¡Sé el primero!</p>';
+            return;
+        }
+
+        tareas.forEach(tarea => {
+            const esHecha = tarea.estado === 'hecha';
+            const card = document.createElement('div');
+            card.className = `card-tarea ${esHecha ? 'hecha' : ''}`;
+            
+            // Renderizar la imagen solo si existe
+            let imgHtml = tarea.imagen ? `<img src="${tarea.imagen}" class="img-preview" onclick="window.open('${tarea.imagen}')" title="Clic para ampliar">` : '';
+            let linkHtml = tarea.enlace ? `<a href="${tarea.enlace}" target="_blank" class="link-tarea">🔗 Ver Enlace</a>` : '';
+
+            card.innerHTML = `
+                <button class="borrar-btn" onclick="borrarTarea(${tarea.id})">❌</button>
+                <div class="materia">${tarea.materia}</div>
+                <h3>${tarea.descripcion}</h3>
+                <div class="status">${esHecha ? '✅ Resuelta y compartida' : '⏳ Pendiente de entregar'}</div>
+                ${imgHtml}
+                <div class="links-container">
+                    ${linkHtml}
+                </div>
+            `;
+            tablon.appendChild(card);
+        });
+    }
+
+    function borrarTarea(id) {
+        let tareas = JSON.parse(localStorage.getItem('tareas')) || [];
+        tareas = tareas.filter(t => t.id !== id);
+        localStorage.setItem('tareas', JSON.stringify(tareas));
+        mostrarTareas();
+    }
+</script>
+
+</body>
+</html>
